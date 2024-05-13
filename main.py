@@ -4,7 +4,8 @@ from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from typing import Optional
 from datetime import datetime, date
-
+import locale
+locale.setlocale(locale.LC_ALL, 'C')
 
 class Single(BaseModel):
     result: str
@@ -55,20 +56,25 @@ class Time(BaseModel):
 singles_db = {}
 next_id = 0
 
+def format_currency(amount):
+    return '${:,.2f}'.format(amount)
+
 def profit(object, item):
     if item.result == "won":
         wager = item.unit_size * item.units
         profit = item.odds * wager
-        profit_currency = round(profit, 2)
-        object.update({"profit": profit_currency, "wager":wager})
+        profit_currency = format_currency(profit)
+        object.update({"profit": profit_currency, "wager": wager})
     elif item.result == "lost":
         wager = item.unit_size * item.units
         profit = 0 - wager
-        object.update({"profit": profit, "wager":wager})
+        profit_currency = format_currency(profit)
+        object.update({"profit": profit_currency, "wager":wager})
     else:
         wager = item.unit_size * item.units
         profit = 0
-        object.update({"profit": profit, "wager":wager})
+        profit_currency = format_currency(profit)
+        object.update({"profit": profit_currency, "wager":wager})
 
 @app.get("/singles/daily")
 async def get_daily_bets():
