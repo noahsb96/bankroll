@@ -3,7 +3,7 @@ app = FastAPI()
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 
 
 class Single(BaseModel):
@@ -75,6 +75,11 @@ async def get_daily_bets():
     today = datetime.now().date()
     daily_bets = [single for single in singles_db.values() if single["timestamp"].date() == today]
     return daily_bets
+
+@app.get("/singles/by_date/{date}")
+async def get_bets_by_date(date: date):
+    bets_on_date = [single for single in singles_db.values() if single["timestamp"].date() == date]
+    return bets_on_date
 
 @app.get("/singles/{single_id}")
 async def read_single_bet(single_id: int):
