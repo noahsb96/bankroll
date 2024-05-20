@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 app = FastAPI()
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from fastapi.encoders import jsonable_encoder
 from typing import Optional
 from datetime import datetime, date
