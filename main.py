@@ -16,6 +16,15 @@ class Single(BaseModel):
     unit_size: float
     timestamp: Optional[datetime] = None
 
+    @validator('timestamp', pre=True, always=True)
+    def parse_date_string(cls, value):
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, '%m/%d/%Y')
+            except ValueError:
+                raise ValueError("timestamp must be in the format MM/DD/YYYY")
+        return value
+
 class Record(BaseModel):
     wins: int
     losses: int
@@ -101,7 +110,7 @@ async def read_single():
 @app.post("/singles/")
 async def create_item(single: Single):
     global next_id
-    single.timestamp = datetime.now()
+    single.timestamp = single.timestamp or datetime.now()
     single_dict = single.model_dump()
     profit(single_dict, single)
     singles_db[next_id] = single_dict
