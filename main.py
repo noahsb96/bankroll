@@ -117,3 +117,26 @@ async def update_single(single_id: int, single: Single):
 async def delete_single(single_id: int):
         del singles_db[single_id]
         return {"message": "Item deleted successfully"}
+
+@app.get("/betting_summary/{start_date}/{end_date}")
+async def get_betting_summary(start_date: date, end_date: date):
+    betting_summary = BettingSummary(
+        start_date=start_date,
+        end_date=end_date,
+        units_size=0.0,
+        total_profit=0.0,
+        unit_profit=0.0,
+        avg_odds=0.0,
+        growth=0,
+        win_rate=0,
+        roi=0,
+        units_spent=0.0,
+        money_spent=0.0,
+        units_won=0.0,
+        winnings=0.0,
+        net_profit=0.0,
+        wins=0,
+        losses=0,
+        pushes=0,
+        sports={}
+    )
