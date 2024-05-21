@@ -2,7 +2,7 @@ from fastapi import FastAPI
 app = FastAPI()
 from pydantic import BaseModel, validator
 from fastapi.encoders import jsonable_encoder
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime, date
 import locale
 locale.setlocale(locale.LC_ALL, 'C')
@@ -31,9 +31,9 @@ class Record(BaseModel):
     pushes: int
     win_percentage: int
 
-class Time(BaseModel):
-    month: str
-    bankroll: float
+class BettingSummary(BaseModel):
+    start_date: date
+    end_date: date
     units_size: float
     total_profit: float
     unit_profit: float
@@ -49,18 +49,7 @@ class Time(BaseModel):
     wins: int
     losses: int
     pushes: int
-    nfl: Record
-    nba: Record
-    mlb: Record
-    ncaaf: Record
-    ncaab: Record
-    nhl: Record
-    wnba: Record
-    cfl: Record
-    boxing: Record
-    ufc: Record
-    soccer: Record
-    other: Record
+    sports: Dict[str, Record]
 
 singles_db = {}
 next_id = 0
