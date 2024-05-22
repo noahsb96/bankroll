@@ -123,7 +123,6 @@ async def get_betting_summary(start_date: date, end_date: date):
     betting_summary = BettingSummary(
         start_date=start_date,
         end_date=end_date,
-        units_size=0.0,
         total_profit=0.0,
         unit_profit=0.0,
         avg_odds=0.0,
@@ -149,3 +148,6 @@ async def get_betting_summary(start_date: date, end_date: date):
         sport = bet["sport"]
         if sport not in betting_summary.sports:
             betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
+        if bet["result"] == "won":
+            betting_summary.total_profit += bet["profit"]
+            betting_summary.unit_profit += bet["profit"]/bet["unit_size"]
