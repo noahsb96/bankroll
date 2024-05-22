@@ -144,3 +144,8 @@ async def get_betting_summary(start_date: date, end_date: date):
     bets_in_date_range = [
         single for single in singles_db.values() if start_date <= single.timestamp.date() and single.timestamp.date() <= end_date
     ]
+
+    for bet in bets_in_date_range:
+        sport = bet["sport"]
+        if sport not in betting_summary.sports:
+            betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
