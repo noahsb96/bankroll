@@ -97,7 +97,7 @@ async def read_single():
     return singles_db
 
 @app.post("/singles/")
-async def create_item(single: Single):
+async def create_single(single: Single):
     global next_id
     single.timestamp = single.timestamp or datetime.now()
     single_dict = single.model_dump()
