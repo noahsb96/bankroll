@@ -34,7 +34,7 @@ class Record(BaseModel):
 class BettingSummary(BaseModel):
     start_date: date
     end_date: date
-    bankroll = float
+    bankroll: float
     units_size: float
     total_profit: float
     unit_profit: float
