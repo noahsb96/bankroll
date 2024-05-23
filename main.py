@@ -125,6 +125,7 @@ async def get_betting_summary(start_date: date, end_date: date):
         start_date=start_date,
         end_date=end_date,
         bankroll = 0,
+        units_size = 0,
         total_profit=0.0,
         unit_profit=0.0,
         avg_odds=0.0,
