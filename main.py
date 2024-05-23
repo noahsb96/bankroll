@@ -147,13 +147,16 @@ async def get_betting_summary(start_date: date, end_date: date):
     ]
 
     added_odds = 0
+    added_bankroll = 0
 
     for bet in bets_in_date_range:
         sport = bet["sport"]
         if sport not in betting_summary.sports:
             betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
+        added_bankroll += bet["unit_size"]
         betting_summary.total_profit += bet["profit"]
         betting_summary.unit_profit += bet["profit"]/bet["unit_size"]
         added_odds += bet["odds"]
     
+    betting_summary.bankroll = added_bankroll / len(bets_in_date_range)
     betting_summary.avg_odds = added_odds / len(bets_in_date_range)
