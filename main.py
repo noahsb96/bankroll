@@ -75,6 +75,9 @@ def profit(object, item):
         profit_currency = format_currency(profit)
         object.update({"profit": profit_currency, "wager":wager})
 
+def average_bankroll():
+    total_bankroll = 0
+
 @app.get("/singles/daily")
 async def get_daily_bets():
     today = datetime.now().date()
