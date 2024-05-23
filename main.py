@@ -75,9 +75,6 @@ def profit(object, item):
         profit_currency = format_currency(profit)
         object.update({"profit": profit_currency, "wager":wager})
 
-def average_bankroll():
-    total_bankroll = 0
-
 @app.get("/singles/daily")
 async def get_daily_bets():
     today = datetime.now().date()
@@ -155,9 +152,8 @@ async def get_betting_summary(start_date: date, end_date: date):
         sport = bet["sport"]
         if sport not in betting_summary.sports:
             betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
-        if bet["result"] == "won":
-            betting_summary.total_profit += bet["profit"]
-            betting_summary.unit_profit += bet["profit"]/bet["unit_size"]
+        betting_summary.total_profit += bet["profit"]
+        betting_summary.unit_profit += bet["profit"]/bet["unit_size"]
         added_odds += bet["odds"]
     
     betting_summary.avg_odds = added_odds / len(bets_in_date_range)
