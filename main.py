@@ -34,6 +34,7 @@ class Record(BaseModel):
 class BettingSummary(BaseModel):
     start_date: date
     end_date: date
+    bankroll = float
     units_size: float
     total_profit: float
     unit_profit: float
@@ -123,6 +124,7 @@ async def get_betting_summary(start_date: date, end_date: date):
     betting_summary = BettingSummary(
         start_date=start_date,
         end_date=end_date,
+        bankroll = 0,
         total_profit=0.0,
         unit_profit=0.0,
         avg_odds=0.0,
