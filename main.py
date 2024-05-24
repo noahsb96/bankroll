@@ -29,6 +29,15 @@ class Single(BaseModel):
             except ValueError:
                 raise ValueError("timestamp must be in the format MM/DD/YYYY")
         return value
+    
+    def dict(self, **kwargs):
+        dict_data = super().dict(**kwargs)
+        if self.timestamp:
+            dict_data['timestamp'] = self.timestamp.strftime('%m/%d/%Y')
+        return dict_data
+
+    def json(self, **kwargs):
+        return super().json(**kwargs)
 
 class Record(BaseModel):
     wins: int
@@ -117,10 +126,9 @@ async def create_single(single: Single):
 
 @app.put("/singles/{single_id}", response_model=Single)
 async def update_single(single_id: int, single: Single):
-    update_single_encoded = jsonable_encoder(single)
-    singles_db[single_id] = update_single_encoded
-    profit(update_single_encoded, single)
-    return update_single_encoded
+    singles_db[single_id] = single
+    profit(single)
+    return single
 
 @app.delete("/singles/{single_id}")
 async def delete_single(single_id: int):
