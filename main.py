@@ -2,7 +2,7 @@ from fastapi import FastAPI
 app = FastAPI()
 from pydantic import BaseModel, validator
 from fastapi.encoders import jsonable_encoder
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from datetime import datetime, date
 import locale
 locale.setlocale(locale.LC_ALL, 'C')
@@ -52,28 +52,24 @@ class BettingSummary(BaseModel):
     pushes: int
     sports: Dict[str, Record]
 
-singles_db = {}
+singles_db: Dict[int, Single] = {}
 next_id = 0
 
 def format_currency(amount):
     return '${:,.2f}'.format(amount)
 
-def profit(object, item):
-    if item.result == "won":
-        wager = item.unit_size * item.units
-        profit = item.odds * wager
-        profit_currency = format_currency(profit)
-        object.update({"profit": profit_currency, "wager": wager})
-    elif item.result == "lost":
-        wager = item.unit_size * item.units
-        profit = 0 - wager
-        profit_currency = format_currency(profit)
-        object.update({"profit": profit_currency, "wager":wager})
+def profit(single: Any) -> None:
+    wager = single.unit_size * single.units
+    if single.result == "won":
+        single.wager = wager
+        single.profit_number = single.odds * wager
+    elif single.result == "lost":
+        single.wager = wager
+        single.profit_number = -wager
     else:
-        wager = item.unit_size * item.units
-        profit = 0
-        profit_currency = format_currency(profit)
-        object.update({"profit": profit_currency, "wager":wager})
+        single.wager = wager
+        single.profit_number = 0
+    single.profit = format_currency(single.profit_number)
 
 @app.get("/singles/daily")
 async def get_daily_bets():
@@ -100,12 +96,11 @@ async def read_single():
 @app.post("/singles/")
 async def create_single(single: Single):
     global next_id
-    single.timestamp = single.timestamp or datetime.now()
-    single_dict = single.model_dump()
-    profit(single_dict, single)
-    singles_db[next_id] = single_dict
+    single.timestamp = datetime.now() if single.timestamp is None else single.timestamp
+    profit(single)
+    singles_db[next_id] = single
     next_id += 1
-    return single_dict
+    return single
 
 @app.put("/singles/{single_id}", response_model=Single)
 async def update_single(single_id: int, single: Single):
@@ -159,5 +154,6 @@ async def get_betting_summary(start_date: date, end_date: date):
         betting_summary.unit_profit += bet["profit"]/bet["unit_size"]
         added_odds += bet["odds"]
     
-    betting_summary.bankroll = added_bankroll / len(bets_in_date_range)
-    betting_summary.avg_odds = added_odds / len(bets_in_date_range)
+    betting_summary.bankroll = added_bankroll/len(bets_in_date_range)
+    betting_summary.avg_odds = added_odds/len(bets_in_date_range)
+    return {"bets_in_date_range": bets_in_date_range}
