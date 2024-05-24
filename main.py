@@ -15,6 +15,9 @@ class Single(BaseModel):
     odds: float
     unit_size: float
     timestamp: Optional[datetime] = None
+    profit_number: Optional[float] = None
+    wager: Optional[float] = None
+    profit: Optional[str] = None
 
     @validator('timestamp', pre=True, always=True)
     def parse_date_string(cls, value):
