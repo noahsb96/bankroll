@@ -31,13 +31,13 @@ class Single(BaseModel):
         return value
     
     def dict(self, **kwargs):
-        dict_data = super().dict(**kwargs)
+        dict_data = super().model_dump(**kwargs)
         if self.timestamp:
             dict_data['timestamp'] = self.timestamp.strftime('%m/%d/%Y')
         return dict_data
 
     def json(self, **kwargs):
-        return super().json(**kwargs)
+        return super().model_dump_json(**kwargs)
 
 class Record(BaseModel):
     wins: int
