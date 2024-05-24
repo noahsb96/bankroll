@@ -94,12 +94,12 @@ def profit(single: Any) -> None:
 @app.get("/singles/daily")
 async def get_daily_bets():
     today = datetime.now().date()
-    daily_bets = [single for single in singles_db.values() if single["timestamp"].date() == today]
+    daily_bets = [single for single in singles_db.values() if single.timestamp.date() == today]
     return daily_bets
 
 @app.get("/singles/by_date/{date}")
 async def get_bets_by_date(date: date):
-    bets_on_date = [single for single in singles_db.values() if single["timestamp"].date() == date]
+    bets_on_date = [single for single in singles_db.values() if single.timestamp.date() == date]
     return bets_on_date
 
 @app.get("/singles/{single_id}")
@@ -174,7 +174,7 @@ async def get_betting_summary(start_date: date, end_date: date):
         betting_summary.total_profit += format_decimal(bet.profit)
         betting_summary.unit_profit += format_decimal(bet.profit)/format_decimal(bet.unit_size)
         added_odds += bet.odds
-
+    
     betting_summary.total_profit = format_currency(betting_summary.total_profit)
     betting_summary.bankroll = format_currency(added_bankroll/len(bets_in_date_range))
     betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
