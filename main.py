@@ -9,40 +9,10 @@ from re import sub
 from decimal import Decimal
 locale.setlocale(locale.LC_ALL, 'C')
 
-class Single(BaseModel):
-    result: str
-    pick: str 
-    sport: str
-    units: float
-    odds: float
-    unit_size: float
-    timestamp: Optional[datetime] = None
-    profit_number: Optional[float] = None
-    wager: Optional[float] = None
-    profit: Optional[str] = None
-    month_bankroll: Optional[float] = None
-
-    @validator('timestamp', pre=True, always=True)
-    def parse_date_string(cls, value):
-        if isinstance(value, str):
-            try:
-                return datetime.strptime(value, '%m/%d/%Y')
-            except ValueError:
-                raise ValueError("timestamp must be in the format MM/DD/YYYY")
-        return value
-    
-    def dict(self, **kwargs):
-        dict_data = super().model_dump(**kwargs)
-        if self.timestamp:
-            dict_data['timestamp'] = self.timestamp.strftime('%m/%d/%Y')
-        return dict_data
-
-    def json(self, **kwargs):
-        return super().model_dump_json(**kwargs)
-    
 class Month(BaseModel):
     bankroll: Decimal
     month_year: datetime
+    unit_size: float
 
     @validator('month_year', pre=True, always=True)
     def parse_date_string(cls, value):
@@ -57,6 +27,36 @@ class Month(BaseModel):
         dict_data = super().model_dump(**kwargs)
         if self.month_year:
             dict_data['month_year'] = self.month_year.strftime('%m/%Y')
+        return dict_data
+
+    def json(self, **kwargs):
+        return super().model_dump_json(**kwargs)
+    
+class Single(BaseModel):
+    result: str
+    pick: str 
+    sport: str
+    units: float
+    odds: float
+    timestamp: Optional[datetime] = None
+    profit_number: Optional[float] = None
+    wager: Optional[float] = None
+    profit: Optional[str] = None
+    month_bankroll: Month
+
+    @validator('timestamp', pre=True, always=True)
+    def parse_date_string(cls, value):
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, '%m/%d/%Y')
+            except ValueError:
+                raise ValueError("timestamp must be in the format MM/DD/YYYY")
+        return value
+    
+    def dict(self, **kwargs):
+        dict_data = super().model_dump(**kwargs)
+        if self.timestamp:
+            dict_data['timestamp'] = self.timestamp.strftime('%m/%d/%Y')
         return dict_data
 
     def json(self, **kwargs):
@@ -101,7 +101,8 @@ def format_decimal(amount):
     return Decimal(sub(r'[^\d\-.]', '', amount))
 
 def profit(single: Any) -> None:
-    wager = single.unit_size * single.units
+    unit_size = single.month_bankroll.unit_size
+    wager = unit_size * single.units
     if single.result == "won":
         single.wager = wager
         single.profit_number = single.odds * wager
@@ -112,6 +113,12 @@ def profit(single: Any) -> None:
         single.wager = wager
         single.profit_number = 0
     single.profit = format_currency(single.profit_number)
+
+def update_months_db(month: Month):
+    month_str = month.month_year.strftime('%m/%Y')
+    if month_str not in months_db:
+        months_db[month_str] = month
+    return months_db[month_str]
 
 @app.get("/singles/daily")
 async def get_daily_bets():
@@ -140,20 +147,12 @@ async def create_single(single: Single):
     global next_id
     single.timestamp = datetime.now() if single.timestamp is None else single.timestamp
     profit(single)
-    single.unit_size = format_currency(single.unit_size)
+    month_instance = update_months_db(single.month_bankroll)
+    single.month_bankroll = month_instance
     single.wager = format_currency(single.wager)
     singles_db[next_id] = single
     next_id += 1
     return single
-
-@app.post("/monthly/bankroll/{month_year}")
-async def create_month(month: Month):
-    month_str = month.month_year.strftime('%m/%Y')
-    if month_str in months_db:
-        return {"message": "Month/Year Combination already entered. Enter another combination or edit current combination"}
-    else:
-        months_db[month_str] = month
-        return month
 
 @app.put("/singles/{single_id}", response_model=Single)
 async def update_single(single_id: int, single: Single):
@@ -199,7 +198,7 @@ async def get_betting_summary(start_date: date, end_date: date):
         if sport not in betting_summary.sports:
             betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
         betting_summary.total_profit += format_decimal(bet.profit)
-        betting_summary.unit_profit += format_decimal(bet.profit)/format_decimal(bet.unit_size)
+        betting_summary.unit_profit += format_decimal(bet.profit_number) / bet.month_bankroll.unit_size
         added_odds += bet.odds
     
     betting_summary.total_profit = format_currency(betting_summary.total_profit)
