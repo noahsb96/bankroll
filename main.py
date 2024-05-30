@@ -10,7 +10,7 @@ from decimal import Decimal
 locale.setlocale(locale.LC_ALL, 'C')
 
 class Month(BaseModel):
-    bankroll: Decimal
+    bankroll: float
     month_year: datetime
     unit_size: float
 
@@ -109,9 +109,11 @@ def profit(single: Any) -> None:
     elif single.result == "lost":
         single.wager = wager
         single.profit_number = -wager
-    else:
+    elif single.result == "push":
         single.wager = wager
         single.profit_number = 0
+    else:
+        return {"Message: Incorrect Result Entered. Enter Win, Loss, Or Push"}
     single.profit = format_currency(single.profit_number)
 
 def update_months_db(month: Month):
