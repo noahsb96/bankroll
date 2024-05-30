@@ -164,8 +164,11 @@ async def create_single(single: Single):
     single.wager = format_currency(single.wager)
     singles_db[next_id] = single
     next_id += 1
-    print(months_db)
     return single
+
+@app.post("/monthly/bankroll/")
+async def create_bankroll(month: Month):
+    update_months_db(month)
 
 @app.put("/singles/{single_id}", response_model=Single)
 async def update_single(single_id: int, single: Single):
