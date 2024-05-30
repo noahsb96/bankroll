@@ -195,8 +195,15 @@ async def update_month(month_date: str, month: Month):
 
 @app.delete("/singles/{single_id}")
 async def delete_single(single_id: int):
-        del singles_db[single_id]
-        return {"message": "Item deleted successfully"}
+    del singles_db[single_id]
+    return {"message": "Item deleted successfully"}
+
+@app.delete("/monthly/bankroll{month_date}")
+async def delete_bankroll(month_date):
+    month_datetime = datetime.strptime(month_date, '%m-%Y')
+    month_key = month_datetime.strftime('%m/%Y')
+    del months_db[month_key]
+    return {"message": "Item deleted successfully"}
 
 @app.get("/betting_summary/{start_date}/{end_date}")
 async def get_betting_summary(start_date: date, end_date: date):
