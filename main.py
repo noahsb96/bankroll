@@ -118,8 +118,7 @@ def profit(single: Any) -> None:
 
 def update_months_db(month: Month):
     month_str = month.month_year.strftime('%m/%Y')
-    if month_str not in months_db:
-        months_db[month_str] = month
+    months_db[month_str] = month
     return months_db[month_str]
 
 @app.get("/singles/daily")
@@ -163,7 +162,8 @@ async def create_single(single: Single):
     global next_id
     single.timestamp = datetime.now() if single.timestamp is None else single.timestamp
     profit(single)
-    month_instance = update_months_db(single.month_bankroll)
+    if single.month_bankroll not in months_db:
+        month_instance = update_months_db(single.month_bankroll)
     single.month_bankroll = month_instance
     single.wager = format_currency(single.wager)
     singles_db[next_id] = single
@@ -172,13 +172,26 @@ async def create_single(single: Single):
 
 @app.post("/monthly/bankroll/")
 async def create_bankroll(month: Month):
-    update_months_db(month)
+    month_str = month.month_year.strftime('%m/%Y')
+    if month_str not in months_db:
+        update_months_db(month)
+    else:
+        return {"Message: Month already entered. Enter new month or update month"}
 
 @app.put("/singles/{single_id}", response_model=Single)
 async def update_single(single_id: int, single: Single):
     singles_db[single_id] = single
     profit(single)
     return single
+
+@app.put("/monthly/bankroll/{month_date}", response_model=Month)
+async def update_month(month_date: str, month: Month):
+    month_datetime = datetime.strptime(month_date, '%m-%Y')
+    month_key = month_datetime.strftime('%m/%Y')
+    if month_key not in months_db:
+        return {"Message: Item not Found"}
+    updated_month = update_months_db(month)
+    return updated_month
 
 @app.delete("/singles/{single_id}")
 async def delete_single(single_id: int):
