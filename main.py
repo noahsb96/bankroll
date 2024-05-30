@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 app = FastAPI()
 from pydantic import BaseModel, validator
 from fastapi.encoders import jsonable_encoder
@@ -144,6 +144,16 @@ async def read_single_bet(single_id: int):
 async def read_single():
     return singles_db
 
+@app.get("/monthly/bankroll/{month_date}")
+async def read_month_bankroll(month_date: str):
+    print(f"Received month_date: {month_date}")
+    month_datetime = datetime.strptime(month_date, '%m-%Y')
+    month_key = month_datetime.strftime('%m/%Y')
+    bankroll = months_db.get(month_key)
+    if bankroll is None:
+        {"message": "Item not Found"}
+    return bankroll
+
 @app.post("/singles/")
 async def create_single(single: Single):
     global next_id
@@ -154,6 +164,7 @@ async def create_single(single: Single):
     single.wager = format_currency(single.wager)
     singles_db[next_id] = single
     next_id += 1
+    print(months_db)
     return single
 
 @app.put("/singles/{single_id}", response_model=Single)
