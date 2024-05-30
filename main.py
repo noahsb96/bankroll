@@ -144,6 +144,10 @@ async def read_single_bet(single_id: int):
 async def read_single():
     return singles_db
 
+@app.get("/monthly/bankroll/")
+async def read_bankrolls():
+    return months_db
+
 @app.get("/monthly/bankroll/{month_date}")
 async def read_month_bankroll(month_date: str):
     print(f"Received month_date: {month_date}")
