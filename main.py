@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 app = FastAPI()
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, validator
 from typing import Optional, Dict, Any
 from datetime import datetime, date, timedelta
 import locale
@@ -13,7 +13,7 @@ class Month(BaseModel):
     month_year: datetime
     unit_size: float
 
-    @field_validator('month_year', pre=True, always=True)
+    @validator('month_year', pre=True, always=True)
     def parse_date_string(cls, value):
         if isinstance(value, str):
             try:
@@ -43,7 +43,7 @@ class Single(BaseModel):
     profit: Optional[str] = None
     month_bankroll: Month
 
-    @field_validator('timestamp', pre=True, always=True)
+    @validator('timestamp', pre=True, always=True)
     def parse_date_string(cls, value):
         if isinstance(value, str):
             try:
@@ -231,6 +231,7 @@ async def get_betting_summary(start_date: date, end_date: date):
     ]
 
     added_odds = 0
+    current_date = start_date
 
     for bet in bets_in_date_range:
         sport = bet.sport
@@ -239,9 +240,6 @@ async def get_betting_summary(start_date: date, end_date: date):
         betting_summary.total_profit += format_decimal(bet.profit)
         added_odds += bet.odds
     
-    betting_summary.total_profit = format_currency(betting_summary.total_profit)
-    betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
-    current_date = start_date
     while current_date <= end_date:
         month_key = current_date.strftime('%m/%Y')
         if month_key in months_db:
@@ -258,4 +256,8 @@ async def get_betting_summary(start_date: date, end_date: date):
             betting_summary.unit_profit += month_unit_profit
             
         current_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+    betting_summary.growth = betting_summary.total_profit / bets_in_date_range[0].month_bankroll.bankroll
+    betting_summary.total_profit = format_currency(betting_summary.total_profit)
+    betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
     return betting_summary
