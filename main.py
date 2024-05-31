@@ -244,7 +244,7 @@ async def get_betting_summary(start_date: date, end_date: date):
         sport = bet.sport
         if sport not in betting_summary.sports:
             betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
-        betting_summary.total_profit += format_decimal(bet.profit)
+        betting_summary.total_profit += format_decimal(bet.net_profit)
         added_odds += bet.odds
     
     while current_date <= end_date:
@@ -264,7 +264,7 @@ async def get_betting_summary(start_date: date, end_date: date):
             
         current_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
 
-    betting_summary.growth = betting_summary.total_profit / bets_in_date_range[0].month_bankroll.bankroll
+    betting_summary.growth = f"{round(betting_summary.total_profit / bets_in_date_range[0].month_bankroll.bankroll * 100)}%"
     betting_summary.total_profit = format_currency(betting_summary.total_profit)
     betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
     return betting_summary
