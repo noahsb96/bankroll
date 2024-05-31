@@ -1,9 +1,8 @@
 from fastapi import FastAPI, HTTPException
 app = FastAPI()
-from pydantic import BaseModel, validator
-from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel, field_validator
 from typing import Optional, Dict, Any
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import locale
 from re import sub
 from decimal import Decimal
@@ -14,7 +13,7 @@ class Month(BaseModel):
     month_year: datetime
     unit_size: float
 
-    @validator('month_year', pre=True, always=True)
+    @field_validator('month_year', pre=True, always=True)
     def parse_date_string(cls, value):
         if isinstance(value, str):
             try:
@@ -44,7 +43,7 @@ class Single(BaseModel):
     profit: Optional[str] = None
     month_bankroll: Month
 
-    @validator('timestamp', pre=True, always=True)
+    @field_validator('timestamp', pre=True, always=True)
     def parse_date_string(cls, value):
         if isinstance(value, str):
             try:
@@ -238,9 +237,25 @@ async def get_betting_summary(start_date: date, end_date: date):
         if sport not in betting_summary.sports:
             betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
         betting_summary.total_profit += format_decimal(bet.profit)
-        betting_summary.unit_profit += format_decimal(bet.profit_number) / bet.month_bankroll.unit_size
         added_odds += bet.odds
     
     betting_summary.total_profit = format_currency(betting_summary.total_profit)
     betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
+    current_date = start_date
+    while current_date <= end_date:
+        month_key = current_date.strftime('%m/%Y')
+        if month_key in months_db:
+            month_data = months_db[month_key]
+            month_start = max(start_date, date(current_date.year, current_date.month, 1))
+            month_end = min(end_date, date(current_date.year, current_date.month, (current_date.replace(day=28) + timedelta(days=4)).day))
+
+            bets_in_month = [
+                bet for bet in bets_in_date_range if month_start <= bet.timestamp.date() <= month_end
+            ]
+
+            month_profit = sum(format_decimal(bet.profit_number) for bet in bets_in_month)
+            month_unit_profit = month_profit / month_data.unit_size
+            betting_summary.unit_profit += month_unit_profit
+            
+        current_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
     return betting_summary
