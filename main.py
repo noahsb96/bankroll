@@ -258,7 +258,7 @@ async def get_betting_summary(start_date: date, end_date: date):
                 bet for bet in bets_in_date_range if month_start <= bet.timestamp.date() <= month_end
             ]
 
-            month_profit = sum(format_decimal(bet.profit_number) for bet in bets_in_month)
+            month_profit = sum(format_decimal(bet.net_profit_number) for bet in bets_in_month)
             month_unit_profit = month_profit / month_data.unit_size
             betting_summary.unit_profit += month_unit_profit
             
