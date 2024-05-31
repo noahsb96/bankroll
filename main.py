@@ -9,9 +9,9 @@ from decimal import Decimal
 locale.setlocale(locale.LC_ALL, 'C')
 
 class Month(BaseModel):
-    bankroll: float
+    bankroll: Decimal
     month_year: datetime
-    unit_size: float
+    unit_size: Decimal
 
     @validator('month_year', pre=True, always=True)
     def parse_date_string(cls, value):
@@ -35,11 +35,13 @@ class Single(BaseModel):
     result: str
     pick: str 
     sport: str
-    units: float
-    odds: float
+    units: Decimal
+    odds: Decimal
     timestamp: Optional[datetime] = None
-    profit_number: Optional[float] = None
-    wager: Optional[float] = None
+    profit_number: Optional[Decimal] = None
+    net_profit_number: Optional[Decimal] = None
+    wager: Optional[Decimal] = None
+    net_profit: Optional[Decimal] = None
     profit: Optional[str] = None
     month_bankroll: Month
 
@@ -76,11 +78,11 @@ class BettingSummary(BaseModel):
     growth: int
     win_rate: int
     roi: int
-    units_spent: float
-    money_spent: float
-    units_won: float
-    winnings: float
-    net_profit: float
+    units_spent: Decimal
+    money_spent: Decimal
+    units_won: Decimal
+    winnings: Decimal
+    net_profit: Decimal
     wins: int
     losses: int
     pushes: int
@@ -113,6 +115,8 @@ def profit(single: Any) -> None:
         single.profit_number = 0
     else:
         return {"Message: Incorrect Result Entered. Enter Win, Loss, Or Push"}
+    single.net_profit_number = single.profit_number - single.wager
+    single.net_profit = format_currency(single.net_profit_number)
     single.profit = format_currency(single.profit_number)
 
 def update_months_db(month: Month):
@@ -161,8 +165,11 @@ async def create_single(single: Single):
     global next_id
     single.timestamp = datetime.now() if single.timestamp is None else single.timestamp
     profit(single)
-    if single.month_bankroll not in months_db:
+    month_key = single.month_bankroll.month_year.strftime('%m/%Y')
+    if month_key not in months_db:
         month_instance = update_months_db(single.month_bankroll)
+    else:
+        month_instance = months_db[month_key]
     single.month_bankroll = month_instance
     single.wager = format_currency(single.wager)
     singles_db[next_id] = single
