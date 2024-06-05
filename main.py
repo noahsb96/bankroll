@@ -3,9 +3,10 @@ app = FastAPI()
 from pydantic import BaseModel, validator
 from typing import Optional, Dict, Any
 from datetime import datetime, date, timedelta
-import locale
 from re import sub
 from decimal import Decimal
+import locale
+import calendar
 locale.setlocale(locale.LC_ALL, 'C')
 
 class Month(BaseModel):
@@ -238,7 +239,7 @@ async def get_betting_summary(start_date: date, end_date: date):
     ]
 
     added_odds = 0
-    current_date = start_date
+    current_date = start_date.replace(day=1)
 
     for bet in bets_in_date_range:
         sport = bet.sport
@@ -252,13 +253,14 @@ async def get_betting_summary(start_date: date, end_date: date):
         if month_key in months_db:
             month_data = months_db[month_key]
             month_start = max(start_date, date(current_date.year, current_date.month, 1))
-            month_end = min(end_date, date(current_date.year, current_date.month, (current_date.replace(day=28) + timedelta(days=4)).day))
+            last_day_of_month = calendar.monthrange(current_date.year, current_date.month)[1]
+            month_end = min(end_date, date(current_date.year, current_date.month, last_day_of_month))
 
             bets_in_month = [
                 bet for bet in bets_in_date_range if month_start <= bet.timestamp.date() <= month_end
             ]
 
-            month_profit = sum(format_decimal(bet.net_profit_number) for bet in bets_in_month)
+            month_profit = sum(bet.net_profit_number for bet in bets_in_month)
             month_unit_profit = month_profit / month_data.unit_size
             betting_summary.unit_profit += month_unit_profit
             
@@ -267,4 +269,5 @@ async def get_betting_summary(start_date: date, end_date: date):
     betting_summary.growth = f"{round(betting_summary.total_profit / bets_in_date_range[0].month_bankroll.bankroll * 100)}%"
     betting_summary.total_profit = format_currency(betting_summary.total_profit)
     betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
+    betting_summary.unit_profit = round(betting_summary.unit_profit, 2)
     return betting_summary
