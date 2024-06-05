@@ -245,6 +245,19 @@ async def get_betting_summary(start_date: date, end_date: date):
         sport = bet.sport
         if sport not in betting_summary.sports:
             betting_summary.sports[sport] = Record(wins=0, losses=0, pushes=0, win_percentage=0)
+
+        sports_record = betting_summary.sports[sport]
+
+        if bet.result == "won":
+            betting_summary.wins +=1
+            sports_record.wins += 1
+        elif bet.result == "lost":
+            betting_summary.losses += 1
+            sports_record.losses += 1
+        else:
+            betting_summary.pushes +=1
+            sports_record.pushes += 1
+        sports_record.win_percentage = f"{sports_record.wins / (sports_record.wins + sports_record.losses)}%"
         betting_summary.total_profit += format_decimal(bet.net_profit)
         added_odds += bet.odds
     
