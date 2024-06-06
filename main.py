@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 app = FastAPI()
 from pydantic import BaseModel, validator
 from typing import Optional, Dict, Any
@@ -8,6 +8,9 @@ from decimal import Decimal
 import locale
 import calendar
 locale.setlocale(locale.LC_ALL, 'C')
+
+class InvalidResultError(ValueError):
+    pass
 
 class Month(BaseModel):
     bankroll: Decimal
@@ -115,7 +118,8 @@ def profit(single: Any) -> None:
         single.wager = wager
         single.profit_number = 0
     else:
-        return {"Message: Incorrect Result Entered. Enter Win, Loss, Or Push"}
+        raise ValueError("Incorrect Result Entered. Enter Win, Loss, Or Push")
+    
     single.net_profit_number = single.profit_number - single.wager
     single.net_profit = format_currency(single.net_profit_number)
     single.profit = format_currency(single.profit_number)
@@ -257,8 +261,12 @@ async def get_betting_summary(start_date: date, end_date: date):
         else:
             betting_summary.pushes +=1
             sports_record.pushes += 1
-        sports_record.win_percentage = f"{sports_record.wins / (sports_record.wins + sports_record.losses)}%"
-        betting_summary.total_profit += format_decimal(bet.net_profit)
+        if sports_record.wins == 0:
+            sports_record.win_percentage = f"{sports_record.wins}%"
+        else:
+            sports_record.win_percentage = f"{round(100 * (sports_record.wins / (sports_record.wins + sports_record.losses)))}%"
+            
+        betting_summary.total_profit += bet.net_profit_number
         added_odds += bet.odds
     
     while current_date <= end_date:
@@ -283,4 +291,8 @@ async def get_betting_summary(start_date: date, end_date: date):
     betting_summary.total_profit = format_currency(betting_summary.total_profit)
     betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
     betting_summary.unit_profit = round(betting_summary.unit_profit, 2)
+    if betting_summary.wins == 0:
+        betting_summary.win_rate = f"{betting_summary.wins}%"
+    else:
+        betting_summary.win_rate = f"{round(100 *(betting_summary.wins / (betting_summary.losses + betting_summary.wins)))}%"
     return betting_summary
