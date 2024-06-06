@@ -253,6 +253,7 @@ async def get_betting_summary(start_date: date, end_date: date):
         if bet.result == "won":
             betting_summary.wins +=1
             sports_record.wins += 1
+            betting_summary.winnings += format_decimal(bet.profit)
         elif bet.result == "lost":
             betting_summary.losses += 1
             sports_record.losses += 1
@@ -293,6 +294,7 @@ async def get_betting_summary(start_date: date, end_date: date):
     betting_summary.unit_profit = round(betting_summary.unit_profit, 2)
     betting_summary.money_spent = format_currency(betting_summary.money_spent)
     betting_summary.roi = f"{round(100 * (format_decimal(betting_summary.total_profit) / format_decimal(betting_summary.money_spent)))}%"
+    betting_summary.winnings = format_currency(betting_summary.winnings)
     if betting_summary.wins == 0:
         betting_summary.win_rate = f"{betting_summary.wins}%"
     else:
