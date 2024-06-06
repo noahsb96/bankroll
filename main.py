@@ -254,6 +254,7 @@ async def get_betting_summary(start_date: date, end_date: date):
             betting_summary.wins +=1
             sports_record.wins += 1
             betting_summary.winnings += format_decimal(bet.profit)
+            betting_summary.units_won += round(bet.units * bet.odds, 2)
         elif bet.result == "lost":
             betting_summary.losses += 1
             sports_record.losses += 1
