@@ -86,7 +86,6 @@ class BettingSummary(BaseModel):
     money_spent: Decimal
     units_won: Decimal
     winnings: Decimal
-    net_profit: Decimal
     wins: int
     losses: int
     pushes: int
@@ -231,7 +230,6 @@ async def get_betting_summary(start_date: date, end_date: date):
         money_spent=0.0,
         units_won=0.0,
         winnings=0.0,
-        net_profit=0.0,
         wins=0,
         losses=0,
         pushes=0,
@@ -266,7 +264,7 @@ async def get_betting_summary(start_date: date, end_date: date):
         else:
             sports_record.win_percentage = f"{round(100 * (sports_record.wins / (sports_record.wins + sports_record.losses)))}%"
     
-        betting_summary.total_profit += bet.net_profit_number
+        betting_summary.total_profit += format_decimal(bet.net_profit)
         betting_summary.money_spent += format_decimal(bet.wager)
         added_odds += bet.odds
     
