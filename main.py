@@ -292,6 +292,8 @@ async def get_betting_summary(start_date: date, end_date: date):
     betting_summary.total_profit = format_currency(betting_summary.total_profit)
     betting_summary.avg_odds = round(added_odds/len(bets_in_date_range), 2)
     betting_summary.unit_profit = round(betting_summary.unit_profit, 2)
+    betting_summary.money_spent = format_currency(betting_summary.money_spent)
+    betting_summary.roi = f"{round(100 * (format_decimal(betting_summary.total_profit) / format_decimal(betting_summary.money_spent)))}%"
     if betting_summary.wins == 0:
         betting_summary.win_rate = f"{betting_summary.wins}%"
     else:
