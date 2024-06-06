@@ -266,6 +266,7 @@ async def get_betting_summary(start_date: date, end_date: date):
     
         betting_summary.total_profit += format_decimal(bet.net_profit)
         betting_summary.money_spent += format_decimal(bet.wager)
+        betting_summary.units_spent += bet.units
         added_odds += bet.odds
     
     while current_date <= end_date:
