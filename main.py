@@ -265,8 +265,9 @@ async def get_betting_summary(start_date: date, end_date: date):
             sports_record.win_percentage = f"{sports_record.wins}%"
         else:
             sports_record.win_percentage = f"{round(100 * (sports_record.wins / (sports_record.wins + sports_record.losses)))}%"
-            
+    
         betting_summary.total_profit += bet.net_profit_number
+        betting_summary.money_spent += format_decimal(bet.wager)
         added_odds += bet.odds
     
     while current_date <= end_date:
