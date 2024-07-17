@@ -19,3 +19,8 @@ def get_db():
 @app.post("/singles/", response_model=schemas.Single)
 def create_single(single: schemas.SingleCreate, db: Session = Depends(get_db)):
     return crud.create_single(db=db, single=single)
+
+@app.get("/singles/", response_model=list[schemas.Single])
+def read_singles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    singles = crud.get_singles(db, skip=skip, limit=limit)
+    return singles
