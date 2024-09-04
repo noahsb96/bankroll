@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, DECIMAL, DateTime
 from sqlalchemy.orm import relationship
-from .database import Base
+from database import Base
 
 class Month(Base):
     __tablename__ = "months"

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Date, cast
 from datetime import datetime, date
 from typing import Any
-from . import models, schemas
+import models, schemas
 
 def profit_calculation(single: Any) -> None:
     unit_size = single.month.unit_size
