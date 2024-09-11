@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import List
 
 class MonthBase(BaseModel):
     month_year: datetime
@@ -12,6 +12,7 @@ class MonthCreate(MonthBase):
     pass
 
 class Month(MonthBase):
+    id: int
     singles: List['Single'] = []
 
     class Config:
@@ -27,10 +28,13 @@ class SingleBase(BaseModel):
     profit: Decimal
     net_profit: Decimal
     wager: Decimal
-    month_bankroll: datetime
+    month_id: int
 
 class SingleCreate(SingleBase):
     pass
 
 class Single(SingleBase):
     id: int
+
+    class Config:
+        orm_mode = True

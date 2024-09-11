@@ -41,33 +41,40 @@ def get_bankrolls(db: Session, limit: int = 100):
 def get_bankrolls_by_month(db: Session, month: date):
     return db.query(models.Month).filter(cast(models.Single.month_bankroll, Date) == month)
 
-def create_single(db: Session, single: schemas.SingleCreate):
-    single_timestamp = datetime.now() if single_timestamp is None else single_timestamp
-    single_profit = profit_calculation(single)
-    wager = single_profit['wager']
-    profit_number = single_profit['profit_number']
-    month_key = single.month_bankroll.strftime('%m/%Y')
-    db_month = db.query(models.Month).filter_by(month_year=single.month_bankroll).first()
-    if db_month is None:
+def get_or_create_month(db: Session, month: schemas.MonthCreate) -> models.Month:
+    db_month = db.query(models.Month).filter(models.Month.month_year == month.month_year).first()
+    if db_month:
+        return db_month
+    else:
         db_month = models.Month(
-            month_year=single.month_bankroll,
-            bankroll=single.bankroll,
-            unit_size=single.unit_size
-            )
+            month_year=month.month_year,
+            bankroll=month.bankroll,
+            unit_size=month.unit_size
+        )
         db.add(db_month)
-    db_single=models.Single(
+        db.commit()
+        db.refresh(db_month)
+        return db_month
+
+def create_single(db: Session, single: schemas.SingleCreate) -> models.Single:
+    profit_data = profit_calculation(single)
+    wager = profit_data['wager']
+    profit_number = profit_data['profit_number']
+    month=db.query(models.Month).filter_by(id=single.month_id).first()
+    if month is None:
+        raise ValueError(f"Month with ID {single.month_id} does not exist.")
+    db_single = models.Single(
         result=single.result,
         pick=single.pick,
         sport=single.sport,
         units=single.units,
         odds=single.odds,
-        timestamp=single_timestamp,
+        timestamp=single.timestamp,
         profit=profit_number,
         net_profit=profit_number - wager,
         wager=wager,
-        month_bankroll=single.month_bankroll
-        )
-    db_single.month = db_month
+        month_id=month.id
+    )
     db.add(db_single)
     try:
         db.commit()
