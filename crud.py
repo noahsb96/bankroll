@@ -4,9 +4,9 @@ from sqlalchemy import Date, cast
 from datetime import datetime, date
 from typing import Any
 import models, schemas
+from decimal import Decimal
 
-def profit_calculation(single: schemas.SingleCreate) -> dict:
-    unit_size = single.unit_size
+def profit_calculation(single: schemas.SingleCreate, unit_size: Decimal) -> dict:
     wager = unit_size * single.units
     profit_number = 0
     if single.result == "won":
@@ -41,15 +41,15 @@ def get_bankrolls(db: Session, limit: int = 100):
 def get_bankrolls_by_month(db: Session, month: date):
     return db.query(models.Month).filter(cast(models.Single.month_bankroll, Date) == month)
 
-def get_or_create_month(db: Session, month: schemas.MonthCreate) -> models.Month:
-    db_month = db.query(models.Month).filter(models.Month.month_year == month.month_year).first()
+def get_or_create_month(db: Session, month_create: schemas.MonthCreate) -> models.Month:
+    db_month = db.query(models.Month).filter(models.Month.month_year == month_create.month_year).first()
     if db_month:
         return db_month
     else:
         db_month = models.Month(
-            month_year=month.month_year,
-            bankroll=month.bankroll,
-            unit_size=month.unit_size
+            month_year=month_create.month_year,
+            bankroll=month_create.bankroll,
+            unit_size=month_create.unit_size
         )
         db.add(db_month)
         db.commit()
@@ -57,12 +57,17 @@ def get_or_create_month(db: Session, month: schemas.MonthCreate) -> models.Month
         return db_month
 
 def create_single(db: Session, single: schemas.SingleCreate) -> models.Single:
-    profit_data = profit_calculation(single)
+    if single.month:
+        month = get_or_create_month(db, single.month)
+    else:
+        if single.month_id is None:
+            raise ValueError("Month information must be provided if month_id is not provided.")
+    month=db.query(models.Month).filter_by(id=single.month_id).first()
+    if not month:
+        raise ValueError(f"Month with ID {single.month_id} does not exist.")
+    profit_data = profit_calculation(single, month.unit_size)
     wager = profit_data['wager']
     profit_number = profit_data['profit_number']
-    month=db.query(models.Month).filter_by(id=single.month_id).first()
-    if month is None:
-        raise ValueError(f"Month with ID {single.month_id} does not exist.")
     db_single = models.Single(
         result=single.result,
         pick=single.pick,

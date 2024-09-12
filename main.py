@@ -24,6 +24,6 @@ def create_single(single: schemas.SingleCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/singles/", response_model=list[schemas.Single])
-def read_singles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    singles = crud.get_singles(db, skip=skip, limit=limit)
+def read_singles(limit: int = 100, db: Session = Depends(get_db)):
+    singles = crud.get_singles(db, limit=limit)
     return singles
