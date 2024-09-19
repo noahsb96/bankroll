@@ -6,7 +6,7 @@ class Month(Base):
     __tablename__ = "months"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    month_year = Column(DateTime, unique=True, index=True)
+    month_year = Column(String, unique=True, index=True)
     bankroll = Column(DECIMAL)
     unit_size = Column(DECIMAL)
 
@@ -26,5 +26,5 @@ class Single(Base):
     net_profit = Column(DECIMAL)
     wager = Column(DECIMAL)
     month_id = Column(Integer, ForeignKey('months.id'))
-
+    
     month = relationship("Month", back_populates="singles")

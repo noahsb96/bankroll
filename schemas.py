@@ -25,14 +25,14 @@ class SingleBase(BaseModel):
     units: Decimal
     odds: Decimal
     timestamp: datetime
-    profit: Decimal
-    net_profit: Decimal
-    wager: Decimal
-    month_id: Optional[int] = None
-    month: Optional[MonthCreate] = None
+    profit: Optional[Decimal] = None
+    net_profit: Optional[Decimal] = None
+    wager: Optional[Decimal] = None
+    month_year: Optional[str] = None
 
 class SingleCreate(SingleBase):
-    pass
+    month_id: Optional[int] = None
+    month: Optional[MonthCreate] = None
 
 class Single(SingleBase):
     id: int

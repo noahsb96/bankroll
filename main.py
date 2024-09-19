@@ -27,3 +27,11 @@ def create_single(single: schemas.SingleCreate, db: Session = Depends(get_db)):
 def read_singles(limit: int = 100, db: Session = Depends(get_db)):
     singles = crud.get_singles(db, limit=limit)
     return singles
+
+@app.post("/months/", response_model=schemas.Month)
+def create_month(month: schemas.MonthCreate, db: Session = Depends(get_db)):
+    try:
+        db_month = crud.get_or_create_month(db=db, month_create=month)
+        return db_month
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

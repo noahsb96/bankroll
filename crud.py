@@ -57,15 +57,13 @@ def get_or_create_month(db: Session, month_create: schemas.MonthCreate) -> model
         return db_month
 
 def create_single(db: Session, single: schemas.SingleCreate) -> models.Single:
-    if single.month:
-        month = get_or_create_month(db, single.month)
-    else:
-        if single.month_id is None:
-            raise ValueError("Month information must be provided if month_id is not provided.")
-    month=db.query(models.Month).filter_by(id=single.month_id).first()
-    if not month:
-        raise ValueError(f"Month with ID {single.month_id} does not exist.")
-    profit_data = profit_calculation(single, month.unit_size)
+    if single.month_year is None:
+        single.month_year = single.timestamp.strftime("%m/%Y")
+    month_year_str = single.month_year
+    db_month = db.query(models.Month).filter(models.Month.month_year == month_year_str).first()
+    if not db_month:
+        raise ValueError(f"Month {month_year_str} does not exist. Please post the month's bankroll info first.")
+    profit_data = profit_calculation(single, db_month.unit_size)
     wager = profit_data['wager']
     profit_number = profit_data['profit_number']
     db_single = models.Single(
@@ -75,10 +73,10 @@ def create_single(db: Session, single: schemas.SingleCreate) -> models.Single:
         units=single.units,
         odds=single.odds,
         timestamp=single.timestamp,
+        month_year=month_year_str,
         profit=profit_number,
         net_profit=profit_number - wager,
-        wager=wager,
-        month_id=month.id
+        wager=wager
     )
     db.add(db_single)
     try:
